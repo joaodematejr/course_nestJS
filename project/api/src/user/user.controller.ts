@@ -8,11 +8,13 @@ import {
   Patch,
   Delete,
   ParseIntPipe,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePutUserDto } from './dto/update-put-user.dto';
 import { UpdatePatchUserDto } from './dto/update-patch-user.dto';
 import { UserService } from './user.service';
+import { LogInterceptor } from 'src/interceptors/log.interceptor';
 
 @Controller('users')
 export class UserController {
@@ -22,6 +24,7 @@ export class UserController {
     return this.userService.create(data);
   }
 
+  @UseInterceptors(LogInterceptor)
   @Get()
   async list() {
     return this.userService.list();
