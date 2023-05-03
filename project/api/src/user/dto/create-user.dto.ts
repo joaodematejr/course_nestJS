@@ -1,6 +1,8 @@
 import {
+  IsDateString,
   IsEmail,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsStrongPassword,
 } from 'class-validator';
@@ -20,4 +22,8 @@ export class CreateUserDto {
     minNumbers: 1,
   })
   readonly password: string;
+
+  @IsOptional()
+  @IsDateString()
+  readonly birthday: string;
 }
