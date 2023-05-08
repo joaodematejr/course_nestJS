@@ -10,4 +10,19 @@ services:
       MYSQL_DATABASE: api
     ports:
       - 3306:3306
+    networks:
+      - api-network
+  api:
+    build: .
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    networks:
+      - api-network
+
+networks:
+  api-network:
+    driver: bridge
   
