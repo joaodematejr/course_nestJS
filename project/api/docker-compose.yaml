@@ -21,6 +21,8 @@ services:
       - db
     networks:
       - api-network
+    volumes:
+      - ./:/app
 
 networks:
   api-network:
