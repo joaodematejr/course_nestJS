@@ -5,6 +5,7 @@ import { AuthResetDto } from './dto/auth-reset.dto';
 import { UserService } from 'src/user/user.service';
 import { AuthRegisterDto } from './dto/auth-register.dto';
 import { AuthService } from './auth.service';
+import { AuthMeDto } from './dto/auth-me.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -31,5 +32,10 @@ export class AuthController {
   @Post('reset')
   async reset(@Body() { password, token }: AuthResetDto) {
     return await this.authService.reset(password, token);
+  }
+
+  @Post('me')
+  async me(@Body() body: AuthMeDto) {
+    return await this.authService.checkToken(body.token);
   }
 }
