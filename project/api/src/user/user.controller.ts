@@ -9,19 +9,28 @@ import {
   Delete,
   ParseIntPipe,
   UseInterceptors,
+  UseGuards,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateUserDTO } from './dto/create-user.dto';
 import { UpdatePutUserDto } from './dto/update-put-user.dto';
 import { UpdatePatchUserDto } from './dto/update-patch-user.dto';
 import { UserService } from './user.service';
 import { LogInterceptor } from 'src/interceptors/log.interceptor';
 import { ParamId } from 'src/decorators/param-id.decorator';
+import { Roles } from 'src/decorators/roles.decorator';
+import { Role } from 'src/enums/role.enum';
+import { RoleGuard } from 'src/guards/role.guard';
+import { AuthGuard } from 'src/guards/auth.guard';
 
+@Roles(Role.Admin)
+@UseGuards(AuthGuard, RoleGuard)
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  /* @UseGuards(ThrottlerGuard) */
   @Post()
-  async create(@Body() data: CreateUserDto) {
+  async create(@Body() data: CreateUserDTO) {
     return this.userService.create(data);
   }
 

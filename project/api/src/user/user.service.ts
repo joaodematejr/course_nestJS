@@ -1,14 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateUserDTO } from './dto/create-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdatePutUserDto } from './dto/update-put-user.dto';
 import { UpdatePatchUserDto } from './dto/update-patch-user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: CreateUserDto) {
+  async create(data: CreateUserDTO) {
+    data.password = await bcrypt.hash(data.password, await bcrypt.genSalt());
     return this.prisma.user.create({ data });
   }
 
@@ -23,9 +25,10 @@ export class UserService {
 
   async update(
     id: number,
-    { name, email, password, birthday }: UpdatePutUserDto,
+    { name, email, password, birthday, role }: UpdatePutUserDto,
   ) {
     await this.exists(id);
+    password = await bcrypt.hash(password, await bcrypt.genSalt());
     return this.prisma.user.update({
       where: { id },
       data: {
@@ -33,13 +36,14 @@ export class UserService {
         email,
         password,
         birthday: birthday ? new Date(birthday) : null,
+        role,
       },
     });
   }
 
   async updatePartial(
     id: number,
-    { name, email, password, birthday }: UpdatePatchUserDto,
+    { name, email, password, birthday, role }: UpdatePatchUserDto,
   ) {
     await this.exists(id);
     const data: any = {};
@@ -53,7 +57,10 @@ export class UserService {
       data.email = email;
     }
     if (password) {
-      data.password = password;
+      data.password = await bcrypt.hash(password, await bcrypt.genSalt());
+    }
+    if (role) {
+      data.role = role;
     }
     return this.prisma.user.update({ where: { id }, data });
   }

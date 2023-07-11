@@ -1,14 +1,10 @@
-import { IsString, IsStrongPassword } from 'class-validator';
+import { IsEmail, IsString, MinLength } from 'class-validator';
 
 export class AuthLoginDto {
-  @IsString()
+  @IsEmail()
   email: string;
 
-  @IsStrongPassword({
-    minLength: 8,
-    minLowercase: 1,
-    minUppercase: 1,
-    minNumbers: 1,
-  })
+  @IsString()
+  @MinLength(6)
   password: string;
 }

@@ -1,11 +1,20 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { AuthLoginDto } from './dto/auth-login.dto';
-import { AuthForgetDto } from './dto/auth-forget.dto';
-import { AuthResetDto } from './dto/auth-reset.dto';
+import {
+  Body,
+  Controller,
+  Post,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { User } from 'src/decorators/user.decorator';
+import { AuthGuard } from 'src/guards/auth.guard';
 import { UserService } from 'src/user/user.service';
-import { AuthRegisterDto } from './dto/auth-register.dto';
 import { AuthService } from './auth.service';
-import { AuthMeDto } from './dto/auth-me.dto';
+import { AuthForgetDto } from './dto/auth-forget.dto';
+import { AuthLoginDto } from './dto/auth-login.dto';
+import { AuthRegisterDto } from './dto/auth-register.dto';
+import { AuthResetDTO } from './dto/auth-reset.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('auth')
 export class AuthController {
@@ -30,12 +39,21 @@ export class AuthController {
   }
 
   @Post('reset')
-  async reset(@Body() { password, token }: AuthResetDto) {
+  async reset(@Body() { password, token }: AuthResetDTO) {
     return await this.authService.reset(password, token);
   }
 
+  @UseGuards(AuthGuard)
   @Post('me')
-  async me(@Body() body: AuthMeDto) {
-    return await this.authService.checkToken(body.token);
+  async me(@User() user) {
+    return { user };
+  }
+
+  @UseInterceptors(FileInterceptor('file'))
+  @UseGuards(AuthGuard)
+  @Post('photo')
+  async uploadPhoto(@User() user, @UploadedFile() photo: Express.Multer.File) {
+    
+    return { user, photo };
   }
 }

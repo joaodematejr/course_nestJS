@@ -8,6 +8,7 @@ import { User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthRegisterDto } from './dto/auth-register.dto';
 import { UserService } from 'src/user/user.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +21,7 @@ export class AuthService {
     private readonly userService: UserService,
   ) {}
 
-  async createToken(user: User) {
+  createToken(user: User) {
     return {
       accessToken: this.jWTService.sign(
         {
@@ -29,7 +30,7 @@ export class AuthService {
           email: user.email,
         },
         {
-          expiresIn: '1h',
+          expiresIn: '8h',
           subject: String(user.id),
           issuer: this.issuer,
           audience: this.audience,
@@ -38,9 +39,9 @@ export class AuthService {
     };
   }
 
-  async checkToken(token: string) {
+  checkToken(token: string) {
     try {
-      const data = await this.jWTService.verify(token, {
+      const data = this.jWTService.verify(token, {
         audience: this.audience,
         issuer: this.issuer,
       });
@@ -50,7 +51,7 @@ export class AuthService {
     }
   }
 
-  async isValidToken(token: string) {
+  isValidToken(token: string) {
     try {
       this.checkToken(token);
       return true;
@@ -63,11 +64,14 @@ export class AuthService {
     const user = await this.prisma.user.findFirst({
       where: {
         email,
-        password: password,
       },
     });
 
     if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!(await bcrypt.compare(password, user.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
