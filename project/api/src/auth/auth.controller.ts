@@ -2,8 +2,12 @@ import {
   BadRequestException,
   Body,
   Controller,
+  FileTypeValidator,
+  MaxFileSizeValidator,
+  ParseFilePipe,
   Post,
   UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -15,7 +19,11 @@ import { AuthForgetDto } from './dto/auth-forget.dto';
 import { AuthLoginDto } from './dto/auth-login.dto';
 import { AuthRegisterDto } from './dto/auth-register.dto';
 import { AuthResetDTO } from './dto/auth-reset.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  FileFieldsInterceptor,
+  FileInterceptor,
+  FilesInterceptor,
+} from '@nestjs/platform-express';
 import { join } from 'path';
 import { FileService } from 'src/file/file.service';
 
@@ -56,7 +64,22 @@ export class AuthController {
   @UseInterceptors(FileInterceptor('file'))
   @UseGuards(AuthGuard)
   @Post('photo')
-  async uploadPhoto(@User() user, @UploadedFile() photo: Express.Multer.File) {
+  async uploadPhoto(
+    @User() user,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({
+            fileType: 'image/png',
+          }),
+          new MaxFileSizeValidator({
+            maxSize: 1024 * 1024 * 5,
+          }),
+        ],
+      }),
+    )
+    photo: Express.Multer.File,
+  ) {
     const path = join(
       __dirname,
       '..',
@@ -71,5 +94,40 @@ export class AuthController {
       throw new BadRequestException(error);
     }
     return { photo: `photo-${user.id}.jpg` };
+  }
+
+  @UseInterceptors(FilesInterceptor('file'))
+  @UseGuards(AuthGuard)
+  @Post('files')
+  async uploadFiles(
+    @User() user,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    return files;
+  }
+
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      {
+        name: 'avatar',
+        maxCount: 1,
+      },
+      {
+        name: 'background',
+        maxCount: 10,
+      },
+    ]),
+  )
+  @UseGuards(AuthGuard)
+  @Post('files-fields')
+  async uploadFilesFields(
+    @User() user,
+    @UploadedFiles()
+    files: {
+      avatar: Express.Multer.File[];
+      background: Express.Multer.File[];
+    },
+  ) {
+    return files;
   }
 }
